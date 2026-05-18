@@ -56,6 +56,13 @@ def import_data():
     text = response.content.decode("utf-8-sig")
     df = pd.read_csv(StringIO(text))
 
+    value_column = df.columns[-1]
+    df = df.rename(columns={value_column: "Loomulik iive"})
+
+    df["Aasta"] = df["Aasta"].astype(str)
+    df["Maakond"] = df["Maakond"].astype(str)
+    df["Maakond"] = df["Maakond"].str.replace(" maakond", "", regex=False)
+
     return df
 
 
@@ -63,15 +70,14 @@ def import_data():
 def import_geojson():
     gdf = gpd.read_file(GEOJSON_FILE)
 
-    # GeoJSON-is on nimed kujul "Järva maakond".
-    # Teeme nendest samasugused nimed nagu Statistikaameti tabelis.
-    gdf["Maakond"] = gdf["MNIMI"].str.replace(" maakond", "", regex=False)
+    gdf["Maakond"] = gdf["MNIMI"].astype(str)
+    gdf["Maakond"] = gdf["Maakond"].str.replace(" maakond", "", regex=False)
 
     return gdf
 
 
 def get_data_for_year(df, year):
-    return df[df["Aasta"] == year]
+    return df[df["Aasta"] == year].copy()
 
 
 def plot_map(gdf, year):
@@ -103,7 +109,7 @@ df = import_data()
 gdf = import_geojson()
 
 years = sorted(df["Aasta"].unique())
-selected_year = st.sidebar.selectbox("Vali aasta", years)
+selected_year = st.sidebar.selectbox("Vali aasta", years, index=len(years) - 1)
 
 year_data = get_data_for_year(df, selected_year)
 
